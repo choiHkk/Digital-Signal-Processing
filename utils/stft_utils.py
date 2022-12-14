@@ -223,16 +223,15 @@ def istft(y: torch.Tensor,
     return y
 
 
+def pad(y: torch.Tensor, n_fft: int, hop_length: int, mode: str = "reflect"):
+    pad = (int((n_fft-hop_length)/2), int((n_fft-hop_length)/2))
+    y = F.pad(input=y.unsqueeze(1), pad=pad, mode=mode).squeeze(1)
+    return y
+
+
 def normalize(y: torch.Tensor, epsilon: float = 1e-6):
     return torch.log(torch.clamp(input=y, min=epsilon))
 
 
 def denormalize(y: torch.Tensor):
     return torch.exp(y)
-
-
-def pad(y: torch.Tensor, n_fft: int, hop_length: int, mode: str = "reflect"):
-    pad = (int((n_fft-hop_length)/2), int((n_fft-hop_length)/2))
-    y = F.pad(input=y.unsqueeze(1), pad=pad, mode=mode).squeeze(1)
-    return y
-

@@ -36,7 +36,7 @@ def read_wav(filename: str, target_sampling_rate: Optional[int] = None):
             source_sampling_rate=sampling_rate, 
             target_sampling_rate=target_sampling_rate
         )
-    return sampling_rate, y
+    return sampling_rate, y.astype(np.float32)
 
 
 def write_wav(filename: str, target_sampling_rate: int, y: np.ndarray):
