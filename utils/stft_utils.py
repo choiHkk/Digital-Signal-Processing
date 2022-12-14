@@ -1,5 +1,6 @@
 """
 https://pytorch.org/docs/stable/generated/torch.stft.html
+https://pytorch.org/docs/stable/generated/torch.istft.html
 https://github.com/jaywalnut310/vits/blob/main/mel_processing.py
 """
 
@@ -19,7 +20,6 @@ def linear_spectrogram(y: torch.Tensor,
                        n_fft, 
                        hop_length, 
                        win_length: Optional[int] = None, 
-                       window: Optional[torch.Tensor] = None, 
                        center: bool = False, 
                        pad_mode: str = 'reflect', 
                        normalized: bool = False, 
@@ -35,7 +35,6 @@ def linear_spectrogram(y: torch.Tensor,
         n_fft=n_fft, 
         hop_length=hop_length, 
         win_length=win_length, 
-        window=window, 
         center=center, 
         pad_mode=pad_mode, 
         normalized=normalized, 
@@ -60,7 +59,6 @@ def mel_spectrogram(y: torch.Tensor,
                     win_length: Optional[int] = None, 
                     mel_fmin: Optional[int] = None, 
                     mel_fmax: Optional[int] = None, 
-                    window: Optional[torch.Tensor] = None, 
                     center: bool = False, 
                     pad_mode: str = 'reflect', 
                     normalized: bool = False, 
@@ -80,7 +78,6 @@ def mel_spectrogram(y: torch.Tensor,
         n_fft=n_fft, 
         hop_length=hop_length, 
         win_length=win_length, 
-        window=window, 
         center=center, 
         pad_mode=pad_mode, 
         normalized=normalized, 
@@ -135,16 +132,36 @@ def linear_to_mel(y: torch.Tensor,
     return y
 
 
+def reconstruct_wav(y: torch.Tensor, 
+                    n_fft: int, 
+                    hop_length: int, 
+                    win_length: int):
+    fft = stft(
+        y=y, 
+        n_fft=n_fft, 
+        hop_length=hop_length, 
+        win_length=win_length, 
+        return_complex=False
+    )
+    y = istft(
+        y=fft, 
+        n_fft=n_fft, 
+        hop_length=hop_length, 
+        win_length=win_length, 
+        return_complex=False
+    )
+    return y
+
+
 def stft(y: torch.Tensor, 
          n_fft, 
          hop_length, 
          win_length: Optional[int] = None, 
-         window: Optional[torch.Tensor] = None, 
          center: bool = False, 
          pad_mode: str = 'reflect', 
          normalized: bool = False, 
          onesided: bool = True, 
-         return_complex: bool = True):
+         return_complex: bool = False):
     
     global functions
     if win_length is None:
@@ -170,6 +187,40 @@ def stft(y: torch.Tensor,
     )
     assert fft.size(1) == (n_fft // 2 + 1)
     return fft
+
+
+def istft(y: torch.Tensor, 
+          n_fft, 
+          hop_length, 
+          win_length: Optional[int] = None, 
+          center: bool = True, 
+          normalized: bool = False, 
+          onesided: bool = True, 
+          length: Optional[int] = None, 
+          return_complex: bool = False):
+    
+    global functions
+    if win_length is None:
+        win_length = n_fft
+    
+    dtype_device = str(y.dtype) + '_' + str(y.device)
+    wnsize_dtype_device = str(win_length) + '_' + dtype_device
+    if wnsize_dtype_device not in functions["hann_window"]:
+        functions["hann_window"][wnsize_dtype_device] = torch.hann_window(win_length).to(dtype=y.dtype, device=y.device)
+    
+    y = torch.istft(
+        input=y,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        window=functions["hann_window"][wnsize_dtype_device], 
+        center=center, 
+        normalized=normalized, 
+        onesided=onesided, 
+        length=length, 
+        return_complex=return_complex
+    )
+    return y
 
 
 def normalize(y: torch.Tensor, epsilon: float = 1e-6):
