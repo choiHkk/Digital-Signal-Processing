@@ -5,7 +5,7 @@ import dataclasses
 @dataclasses.dataclass
 class Parameters(object):
     def __init__(self, 
-                 sampling_rate: int = 22050, 
+                 sampling_rate: int = 44100, 
                  n_fft: int = 1024, 
                  hop_length: int = 256, 
                  win_length: int = 1024, 
